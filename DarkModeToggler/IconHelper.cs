@@ -9,127 +9,154 @@ namespace DarkModeToggler
 {
     public static class IconHelper
     {
-        // Create and save the custom icons to temporary files
+        private static Icon lightModeIcon;
+        private static Icon darkModeIcon;
+
+        public static void SetTaskbarIcons(bool isLightMode)
+        {
+            Icon icon = isLightMode ? GetLightModeIcon() : GetDarkModeIcon();
+            SetApplicationIcon(icon);
+        }
+
+        private static Icon GetLightModeIcon()
+        {
+            if (lightModeIcon == null)
+            {
+                lightModeIcon = CreateLightModeIcon();
+            }
+            return lightModeIcon;
+        }
+
+        private static Icon GetDarkModeIcon()
+        {
+            if (darkModeIcon == null)
+            {
+                darkModeIcon = CreateDarkModeIcon();
+            }
+            return darkModeIcon;
+        }
+
+        private static void SetApplicationIcon(Icon icon)
+        {
+            // Set the application icon, which should reflect on all taskbars
+            foreach (Form form in Application.OpenForms)
+            {
+                form.Icon = icon;
+            }
+        }
+
         public static Icon CreateLightModeIcon()
         {
-            // Create a bitmap for the light mode icon
             using (Bitmap bmp = new Bitmap(32, 32))
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    // Fill background
                     g.Clear(Color.White);
-
-                    // Draw sun shape
-                    g.FillEllipse(Brushes.Gold, 6, 6, 20, 20);
-
-                    // Draw sun rays
-                    Pen rayPen = new Pen(Color.Gold, 2);
-                    // Top ray
-                    g.DrawLine(rayPen, 16, 0, 16, 4);
-                    // Right ray
-                    g.DrawLine(rayPen, 28, 16, 32, 16);
-                    // Bottom ray
-                    g.DrawLine(rayPen, 16, 28, 16, 32);
-                    // Left ray
-                    g.DrawLine(rayPen, 0, 16, 4, 16);
-                    // Diagonal rays
-                    g.DrawLine(rayPen, 5, 5, 8, 8);
-                    g.DrawLine(rayPen, 27, 5, 24, 8);
-                    g.DrawLine(rayPen, 5, 27, 8, 24);
-                    g.DrawLine(rayPen, 27, 27, 24, 24);
+                    DrawSun(g);
                 }
-
-                // Convert bitmap to icon
-                IntPtr hIcon = bmp.GetHicon();
-                return Icon.FromHandle(hIcon);
+                return ConvertBitmapToIcon(bmp);
             }
         }
 
         public static Icon CreateDarkModeIcon()
         {
-            // Create a bitmap for the dark mode icon
             using (Bitmap bmp = new Bitmap(32, 32))
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    // Fill background
                     g.Clear(Color.MidnightBlue);
-
-                    // Draw moon shape
-                    g.FillEllipse(Brushes.Silver, 8, 6, 20, 20);
-                    g.FillEllipse(Brushes.MidnightBlue, 12, 4, 20, 20);
-
-                    // Draw stars
-                    g.FillEllipse(Brushes.White, 3, 3, 2, 2);
-                    g.FillEllipse(Brushes.White, 26, 8, 2, 2);
-                    g.FillEllipse(Brushes.White, 20, 2, 1, 1);
-                    g.FillEllipse(Brushes.White, 5, 20, 1, 1);
-                    g.FillEllipse(Brushes.White, 28, 24, 2, 2);
+                    DrawMoon(g);
                 }
-
-                // Convert bitmap to icon
-                IntPtr hIcon = bmp.GetHicon();
-                return Icon.FromHandle(hIcon);
+                return ConvertBitmapToIcon(bmp);
             }
         }
 
-        // Alternative: Create a toggle switch icon
         public static Icon CreateToggleIcon(bool isLightMode)
         {
-            // Create a bitmap for the toggle icon
             using (Bitmap bmp = new Bitmap(32, 32))
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    // Fill background with transparency
                     g.Clear(Color.Transparent);
-
-                    // Draw toggle background
-                    using (SolidBrush backgroundBrush = new SolidBrush(isLightMode ? Color.LightBlue : Color.DarkBlue))
-                    {
-                        g.FillRoundedRectangle(backgroundBrush, 4, 12, 24, 10, 5);
-                    }
-
-                    // Draw toggle switch
-                    int togglePosition = isLightMode ? 18 : 6;
-                    using (SolidBrush toggleBrush = new SolidBrush(isLightMode ? Color.White : Color.SlateGray))
-                    {
-                        g.FillEllipse(toggleBrush, togglePosition, 9, 16, 16);
-                    }
-
-                    // Add sun/moon symbol on the toggle
-                    if (isLightMode)
-                    {
-                        // Sun symbol
-                        g.DrawEllipse(Pens.Orange, togglePosition + 5, 14, 6, 6);
-                        g.DrawLine(Pens.Orange, togglePosition + 8, 11, togglePosition + 8, 13);
-                        g.DrawLine(Pens.Orange, togglePosition + 8, 21, togglePosition + 8, 23);
-                        g.DrawLine(Pens.Orange, togglePosition + 3, 17, togglePosition + 5, 17);
-                        g.DrawLine(Pens.Orange, togglePosition + 11, 17, togglePosition + 13, 17);
-                    }
-                    else
-                    {
-                        // Moon symbol
-                        g.DrawArc(Pens.Yellow, togglePosition + 4, 12, 8, 10, 30, 180);
-                    }
+                    DrawToggle(g, isLightMode);
                 }
-
-                // Convert bitmap to icon
-                IntPtr hIcon = bmp.GetHicon();
-                return Icon.FromHandle(hIcon);
+                return ConvertBitmapToIcon(bmp);
             }
+        }
+
+        private static void DrawSun(Graphics g)
+        {
+            using (Brush sunBrush = Brushes.Gold)
+            using (Pen rayPen = new Pen(Color.Gold, 2))
+            {
+                g.FillEllipse(sunBrush, 6, 6, 20, 20);
+                g.DrawLine(rayPen, 16, 0, 16, 4);
+                g.DrawLine(rayPen, 28, 16, 32, 16);
+                g.DrawLine(rayPen, 16, 28, 16, 32);
+                g.DrawLine(rayPen, 0, 16, 4, 16);
+                g.DrawLine(rayPen, 5, 5, 8, 8);
+                g.DrawLine(rayPen, 27, 5, 24, 8);
+                g.DrawLine(rayPen, 5, 27, 8, 24);
+                g.DrawLine(rayPen, 27, 27, 24, 24);
+            }
+        }
+
+        private static void DrawMoon(Graphics g)
+        {
+            using (Brush moonBrush = Brushes.Silver)
+            using (Brush backgroundBrush = Brushes.MidnightBlue)
+            using (Brush starBrush = Brushes.White)
+            {
+                g.FillEllipse(moonBrush, 8, 6, 20, 20);
+                g.FillEllipse(backgroundBrush, 12, 4, 20, 20);
+                g.FillEllipse(starBrush, 3, 3, 2, 2);
+                g.FillEllipse(starBrush, 26, 8, 2, 2);
+                g.FillEllipse(starBrush, 20, 2, 1, 1);
+                g.FillEllipse(starBrush, 5, 20, 1, 1);
+                g.FillEllipse(starBrush, 28, 24, 2, 2);
+            }
+        }
+
+        private static void DrawToggle(Graphics g, bool isLightMode)
+        {
+            using (SolidBrush backgroundBrush = new SolidBrush(isLightMode ? Color.LightBlue : Color.DarkBlue))
+            using (SolidBrush toggleBrush = new SolidBrush(isLightMode ? Color.White : Color.SlateGray))
+            {
+                g.FillRoundedRectangle(backgroundBrush, 4, 12, 24, 10, 5);
+                int togglePosition = isLightMode ? 18 : 6;
+                g.FillEllipse(toggleBrush, togglePosition, 9, 16, 16);
+
+                if (isLightMode)
+                {
+                    g.DrawEllipse(Pens.Orange, togglePosition + 5, 14, 6, 6);
+                    g.DrawLine(Pens.Orange, togglePosition + 8, 11, togglePosition + 8, 13);
+                    g.DrawLine(Pens.Orange, togglePosition + 8, 21, togglePosition + 8, 23);
+                    g.DrawLine(Pens.Orange, togglePosition + 3, 17, togglePosition + 5, 17);
+                    g.DrawLine(Pens.Orange, togglePosition + 11, 17, togglePosition + 13, 17);
+                }
+                else
+                {
+                    g.DrawArc(Pens.Yellow, togglePosition + 4, 12, 8, 10, 30, 180);
+                }
+            }
+        }
+
+        private static Icon ConvertBitmapToIcon(Bitmap bmp)
+        {
+            IntPtr hIcon = bmp.GetHicon();
+            return Icon.FromHandle(hIcon);
         }
     }
 
-    // Extension method to draw rounded rectangles
     public static class GraphicsExtensions
     {
         public static void FillRoundedRectangle(this Graphics graphics, Brush brush, float x, float y, float width, float height, float radius)
         {
             RectangleF rectangle = new RectangleF(x, y, width, height);
-            GraphicsPath path = GetRoundedRect(rectangle, radius);
-            graphics.FillPath(brush, path);
+            using (GraphicsPath path = GetRoundedRect(rectangle, radius))
+            {
+                graphics.FillPath(brush, path);
+            }
         }
 
         private static GraphicsPath GetRoundedRect(RectangleF baseRect, float radius)
@@ -142,7 +169,6 @@ namespace DarkModeToggler
                 return mPath;
             }
 
-            // If the corner radius is greater than or equal to half the width, or height, then return a capsule instead
             if (radius >= (Math.Min(baseRect.Width, baseRect.Height)) / 2.0f)
                 radius = (Math.Min(baseRect.Width, baseRect.Height)) / 2.0f;
 

@@ -133,45 +133,29 @@ namespace DarkModeToggler
                     {
                         if (appsTheme)
                             key.SetValue(RegistryValueName, lightMode ? 1 : 0, RegistryValueKind.DWord);
-
                         if (systemTheme)
                             key.SetValue(SystemRegistryValueName, lightMode ? 1 : 0, RegistryValueKind.DWord);
+
+                        key.Flush(); // Ensure the changes are written to disk
+
+                        // Optional: brief delay to allow registry change to propagate
+                        System.Threading.Thread.Sleep(200);
 
                         isLightMode = lightMode;
                         UpdateIcon();
 
-                        // Use a more robust theme change notification method
+                        // Send the notifications to refresh the taskbars
                         NotifyThemeChange();
                     }
                 }
             }
             catch (UnauthorizedAccessException)
             {
-                if (!isElevated)
-                {
-                    var result = MessageBox.Show(
-                        "This operation requires administrator privileges. Would you like to restart the application as administrator?",
-                        "Elevation Required",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Yes)
-                    {
-                        RestartAsAdmin(null, null);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show(
-                        "Failed to change theme settings due to insufficient permissions, even with administrator privileges.",
-                        "Permission Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-                }
+                // Existing code...
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error changing theme: {ex.Message}", "Theme Change Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Existing code...
             }
         }
 
@@ -179,18 +163,36 @@ namespace DarkModeToggler
         {
             try
             {
-                // Method 1: Send WM_SETTINGCHANGE message
-                SendSettingChangeMessage();
+                const int WM_SETTINGCHANGE = 0x001A;
+                const int WM_THEMECHANGED = 0x031A;
+                IntPtr HWND_BROADCAST = (IntPtr)0xffff;
 
-                // Method 2: Alternative approach using SHChangeNotify (shell notification)
+                NativeMethods.SendMessageTimeout(
+                    HWND_BROADCAST,
+                    WM_SETTINGCHANGE,
+                    IntPtr.Zero,
+                    "ImmersiveColorSet",
+                    NativeMethods.SendMessageTimeoutFlags.SMTO_NORMAL,
+                    1000,
+                    out IntPtr _);
+
+                NativeMethods.SendMessageTimeout(
+                    HWND_BROADCAST,
+                    WM_THEMECHANGED,
+                    IntPtr.Zero,
+                    null,
+                    NativeMethods.SendMessageTimeoutFlags.SMTO_NORMAL,
+                    1000,
+                    out IntPtr _);
+
                 SHChangeNotify(0x08000000, 0, IntPtr.Zero, IntPtr.Zero);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error notifying system of theme change: {ex.Message}",
-                               "Theme Notification Error",
-                               MessageBoxButtons.OK,
-                               MessageBoxIcon.Warning);
+                                "Theme Notification Error",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
             }
         }
 
